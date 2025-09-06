@@ -1,8 +1,65 @@
-// sidebar.js - Sidebar Management
+// sidebar.js - Sidebar Management with extended UI categories and components
 
 class SidebarManager {
     constructor() {
+        this.populateSidebar();
         this.initializeEventListeners();
+    }
+
+    // Populate sidebar with all UI categories and components
+    populateSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        if (!sidebar) return;
+
+        const sections = {
+            "Application UI": [
+                "Application Shells", "Stacked Layouts", "Sidebar Layouts", "Multi-Column Layouts",
+                "Headings", "Page Headings", "Card Headings", "Section Headings",
+                "Data Display", "Description Lists", "Stats", "Calendars",
+                "Lists", "Stacked Lists", "Tables", "Grid Lists", "Feeds",
+                "Forms", "Form Layouts", "Input Groups", "Select Menus",
+                "Sign-in and Registration", "Textareas", "Radio Groups", "Checkboxes", "Toggles",
+                "Action Panels", "Comboboxes",
+                "Feedback", "Alerts", "Empty States",
+                "Navigation", "Navbars", "Pagination", "Tabs", "Vertical Navigation", "Sidebar Navigation", "Breadcrumbs",
+                "Progress Bars", "Command Palettes",
+                "Overlays", "Modal Dialogs", "Drawers", "Notifications",
+                "Elements", "Avatars", "Badges", "Dropdowns", "Buttons", "Button Groups",
+                "Layout", "Containers", "Cards", "List containers", "Media Objects", "Dividers",
+                "Page Examples", "Home Screens", "Detail Screens", "Settings Screens"
+            ],
+            "Components": [
+                "Introduction", "Autocomplete", "Command palette", "Dialog", "Disclosure",
+                "Dropdown menu", "Popover", "Select", "Tabs"
+            ]
+        };
+
+        sidebar.innerHTML = "";
+
+        Object.entries(sections).forEach(([category, items]) => {
+            const categoryEl = document.createElement('div');
+            categoryEl.className = "sidebar-category mb-4";
+
+            const heading = document.createElement('h3');
+            heading.textContent = category;
+            heading.className = "font-bold text-gray-700 mb-2";
+            categoryEl.appendChild(heading);
+
+            const list = document.createElement('ul');
+            list.className = "space-y-1";
+
+            items.forEach(item => {
+                const li = document.createElement('li');
+                li.textContent = item;
+                li.className = "shape-item cursor-pointer px-2 py-1 rounded hover:bg-gray-100";
+                li.setAttribute('draggable', 'true');
+                li.setAttribute('data-type', item.toLowerCase().replace(/\s+/g, '-'));
+                list.appendChild(li);
+            });
+
+            categoryEl.appendChild(list);
+            sidebar.appendChild(categoryEl);
+        });
     }
 
     // Initialize sidebar event listeners
@@ -43,150 +100,14 @@ class SidebarManager {
             });
 
             // Handle drag end
-            item.addEventListener('dragend', (e) => {
-                console.log('Drag ended');
-                // Remove visual feedback
+            item.addEventListener('dragend', () => {
                 item.classList.remove('opacity-50');
-                
-                // Clear dragged type
-                if (window.canvasManager) {
-                    window.canvasManager.setDraggedType(null);
-                }
-            });
-
-            // Add click to place as fallback
-            item.addEventListener('click', (e) => {
-                e.preventDefault();
-                const type = item.getAttribute('data-type');
-                console.log('Click to place:', type);
-                this.enableClickToPlace(type);
-                
-                // Visual feedback
-                this.highlightShape(type);
-            });
-
-            // Add hover effects
-            item.addEventListener('mouseenter', () => {
-                item.classList.add('scale-105', 'shadow-lg');
-            });
-
-            item.addEventListener('mouseleave', () => {
-                item.classList.remove('scale-105', 'shadow-lg');
-            });
-
-            // Prevent default drag behavior on mobile
-            item.addEventListener('touchstart', (e) => {
-                const type = item.getAttribute('data-type');
-                setTimeout(() => {
-                    this.enableClickToPlace(type);
-                    this.showInstruction(`Tap on the canvas to place a ${type}`);
-                }, 500);
             });
         });
-
-        // Debug drag and drop support
-        console.log('Drag and drop support:', {
-            draggable: 'draggable' in document.createElement('div'),
-            dataTransfer: 'DataTransfer' in window,
-            userAgent: navigator.userAgent
-        });
-    }
-
-    // Add pulsing animation to indicate drag availability
-    addDragHint() {
-        const shapeItems = document.querySelectorAll('.shape-item');
-        shapeItems.forEach(item => {
-            item.classList.add('animate-pulse');
-        });
-
-        // Remove hint after a few seconds
-        setTimeout(() => {
-            shapeItems.forEach(item => {
-                item.classList.remove('animate-pulse');
-            });
-        }, 3000);
-    }
-
-    // Highlight specific shape type
-    highlightShape(type) {
-        const shapeItem = document.querySelector(`[data-type="${type}"]`);
-        if (shapeItem) {
-            shapeItem.classList.add('ring-2', 'ring-blue-500');
-            setTimeout(() => {
-                shapeItem.classList.remove('ring-2', 'ring-blue-500');
-            }, 1000);
-        }
-    }
-
-    // Enable click-to-place mode as drag and drop fallback
-    enableClickToPlace(type) {
-        console.log('Click-to-place mode enabled for:', type);
-        
-        // Change cursor
-        const canvas = document.getElementById('canvas');
-        canvas.style.cursor = 'crosshair';
-        
-        // Add instruction
-        this.showInstruction(`Click on the canvas to place a ${type}`);
-        
-        // Add one-time click listener to canvas
-        const placeElement = (e) => {
-            if (e.target === canvas || e.target.classList.contains('grid-line')) {
-                const rect = canvas.getBoundingClientRect();
-                const x = snapToGrid(e.clientX - rect.left);
-                const y = snapToGrid(e.clientY - rect.top);
-                
-                console.log('Placing element at:', x, y);
-                
-                // Create and add element
-                const newElement = window.elementManager.createElement(type, x, y);
-                const newElements = window.elementManager.addElement(newElement);
-                window.historyManager.addToHistory(newElements);
-                saveToLocalStorage(newElements, window.canvasManager.columns);
-                window.canvasManager.render();
-                
-                // Reset cursor and remove listeners
-                canvas.style.cursor = '';
-                canvas.removeEventListener('click', placeElement);
-                this.hideInstruction();
-                
-                console.log('Element placed successfully!');
-            }
-        };
-        
-        canvas.addEventListener('click', placeElement);
-        
-        // Allow escape to cancel
-        const cancelPlace = (e) => {
-            if (e.key === 'Escape') {
-                canvas.style.cursor = '';
-                canvas.removeEventListener('click', placeElement);
-                document.removeEventListener('keydown', cancelPlace);
-                this.hideInstruction();
-                console.log('Click-to-place cancelled');
-            }
-        };
-        
-        document.addEventListener('keydown', cancelPlace);
-    }
-
-    // Show instruction message
-    showInstruction(message) {
-        let instruction = document.getElementById('instruction-message');
-        if (!instruction) {
-            instruction = document.createElement('div');
-            instruction.id = 'instruction-message';
-            instruction.className = 'fixed top-20 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
-            document.body.appendChild(instruction);
-        }
-        instruction.textContent = message + ' (Press Escape to cancel)';
-    }
-
-    // Hide instruction message
-    hideInstruction() {
-        const instruction = document.getElementById('instruction-message');
-        if (instruction) {
-            instruction.remove();
-        }
     }
 }
+
+// Initialize sidebar manager when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    window.sidebarManager = new SidebarManager();
+});

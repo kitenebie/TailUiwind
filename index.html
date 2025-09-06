@@ -721,6 +721,20 @@
                 toggle.style.transform = 'rotate(0deg)';
             }
         }
+
+        // Toggle sidebar component sections
+        function toggleSidebarSection(sectionId) {
+            const section = document.getElementById(sectionId);
+            const toggle = document.getElementById(sectionId + 'Toggle');
+            
+            if (section.classList.contains('hidden')) {
+                section.classList.remove('hidden');
+                toggle.style.transform = 'rotate(180deg)';
+            } else {
+                section.classList.add('hidden');
+                toggle.style.transform = 'rotate(0deg)';
+            }
+        }
     </script>
     <script src="utils-js.js"></script>
     <script src="storage-js.js"></script>
